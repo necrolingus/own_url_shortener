@@ -1,29 +1,40 @@
 import express from 'express'
-import {router} from './routes/routes.js'
 import {config} from './controller/config.js'
 import {headers} from './middleware/headers.js'
 import {globalLimiter} from './middleware/rateLimit.js'
+import {ensureDatabaseExists} from './controller/createDatabaseIfNotExists.js'
+import {createOrUpdateTables} from './models/modelSync.js'
+import { router } from './routes/routes.js'
 
-
-const app = new express()
+const app = express()
 const port = config.port
 
-// Middleware to parse json data
-app.use(express.json());
-
-//handle x-forwarded-for header and other security stuff
+// Set the app settings
+app.use(express.json())
 app.set('trust proxy', config.rl_number_of_proxies)
-app.use(globalLimiter)
 app.disable('x-powered-by')
 app.use(headers)
+app.use(globalLimiter)
 
-//set api router 
+//Set API router
 app.use('/api', router)
 
-//start express
-app.listen(port, (err) => {
-    console.log(`Server is listening on Port ${port}`)
-    if (err) {
-        console.log(err)
-    }
-})
+//Ensure database exists
+ensureDatabaseExists() 
+    //Then create the tables
+    .then(() => {
+        return createOrUpdateTables(); 
+    })
+    .then(() => {
+        //Then start the server
+        app.listen(port, (err) => {
+            if (err) {
+            console.error('Error starting the server:', err);
+            } else {
+            console.log(`Server is listening on port ${port}`);
+            }
+        });
+    })
+    .catch((error) => {
+    console.error('Error during app initialization:', error);
+});

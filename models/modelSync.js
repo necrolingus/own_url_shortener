@@ -5,7 +5,7 @@ async function createOrUpdateTables() {
         await user.sync({ alter: true }); // Synchronizes the model with the database
         console.log(`User table has been created/updated.`)
     } catch (error) {
-        console.error(`Error while creating/updating user table:`, error)
+        console.error(`Error while creating/updating user table: ${error}`)
     }
 }
 

@@ -7,10 +7,14 @@ const sequelize = InitializeSequelize(false)
 
 // Define the User model
 const user = sequelize.define(config.dbUserTable, {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
     primaryEmail: {
         type: DataTypes.STRING,
-        allowNull: false,
-        primaryKey: true, // Part of the composite primary key
+        allowNull: false
     },
     secondayEmail: {
         type: DataTypes.STRING,
@@ -26,15 +30,29 @@ const user = sequelize.define(config.dbUserTable, {
     },
     domain: {
         type: DataTypes.STRING,
-        allowNull: false,
-        primaryKey: true, // Part of the composite primary key
+        allowNull: false
     },
     maxUrls: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    userActive: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+    },
+    userInactiveDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    }
 }, {
-    timestamps: true,  // Disable timestamps if not needed
+    timestamps: true,  //Include timestamps
+    indexes: [ 
+        {
+            unique: true,
+            fields: ['primaryEmail', 'domain']
+        },
+    ]
 });
 
 // Immediately Invoked Async Function Expression (IIAFE)
@@ -42,15 +60,5 @@ const user = sequelize.define(config.dbUserTable, {
 //     await sequelize.sync();
 //     console.log('The table has been created/updated.');
 // })();
-
-// async function createOrUpdateTable() {
-//     try {
-//         await user.sync({ alter: true }); // Synchronizes the model with the database
-//         console.log(`${config.dbUserTable} table has been created/updated.`)
-//     } catch (error) {
-//         console.error(`Error while creating/updating ${config.dbUserTable}:`, error)
-//     }
-// }
-// createOrUpdateTable()
 
 export { user }

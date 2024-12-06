@@ -1,0 +1,145 @@
+import express, { request } from 'express'
+import {config} from '../controller/config.js'
+import {validateNewUser, validateDeleteUser, validateUpdateUser} from '../controller/schemaValidator.js'
+import {user} from '../models/user.js'
+
+const adminRouter = express.Router()
+const adminSecretValue = config.adminSecretValue
+
+//Create a new user
+adminRouter.post('/user', async function(req,res) {
+    const requestBody = req.body
+    const schemaOutcome = validateNewUser(requestBody)
+
+    if (!schemaOutcome) {
+        return res.status(422).json({'error': 'Bad schema'})
+    }
+
+    //Schema is good
+    try {
+        await user.create({
+            ...requestBody
+        })
+        return res.status(200).json({'outcome': 'User created'})
+    } catch (error) {
+        //Check for PostgreSQL duplicate key error (error code 23505)
+        if (error.name === 'SequelizeUniqueConstraintError' || error.original.code === '23505') {
+            return res.status(400).json({'error': 'Duplicate key error: A user with this email and domain already exists'})
+        }
+        //Handle other errors
+        return res.status(500).json({'error': 'Error adding the user'})
+    }
+})
+
+//Delete a user
+adminRouter.delete('/user', async function(req,res) {
+    const requestBody = req.body
+    const schemaOutcome = validateDeleteUser(requestBody)
+
+    if (!schemaOutcome) {
+        return res.status(422).json({'error': 'Bad schema'})
+    }
+
+    //Schema is good
+    try {
+        //Check if user exists
+        const resultCountActive = await user.count(
+            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+        })
+
+        const resultCountInactive = await user.count(
+            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 0 } 
+        })
+
+        if (resultCountActive === 0 && resultCountInactive === 0) {
+            return res.status(204).json({'error':'The user does not exist'})
+        }
+
+        //User exists, set as inactive
+        if (resultCountActive === 1) {
+            await user.update(
+                { userActive: 0, userInactiveDate: new Date() },
+                { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+            })
+            return res.status(200).json({'outcome': 'User deleted. userActive is now 0'})
+        } 
+
+        //Check if user exist, but is not already inactive
+        if (resultCountInactive === 1) {
+            return res.status(409).json({'outcome': 'User is already inactive'})
+        }
+
+    } catch (error) {
+        return res.status(500).json({'error': 'Error deleting the user'})
+    } 
+})
+
+//update a user
+adminRouter.patch('/user', async function(req,res) {
+    let outcomeText = ""
+    const requestBody = req.body
+    const schemaOutcome = validateUpdateUser(requestBody)
+
+    if (!schemaOutcome) {
+        return res.status(422).json({'error': 'Bad schema'})
+    }
+
+    //Check if the admin sent any data to be updated
+    if (requestBody.apiKey === undefined && requestBody.maxUrls === undefined) {
+        return res.status(422).json({'error': 'Nothing requested for update'})
+    } 
+
+    //Schema is good and the admin sent data to be updated
+    try {
+        //Check if the user exists in either an active or inactive state
+        const resultCountActive = await user.count(
+            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+        })
+
+        const resultCountInActive = await user.count(
+            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 0 } 
+        })
+
+        if (resultCountActive === 0 && resultCountInActive === 0) {
+            return res.status(204).json({'error':'The user does not exist'})
+        }
+
+        //The user exists and is active
+        if (resultCountActive === 1) {
+            if (requestBody.apiKey !== undefined) {
+                await user.update(
+                    { apiKey: requestBody.apiKey },
+                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                })
+                outcomeText += "apiKey updated. "
+            }
+
+            if (requestBody.maxUrls !== undefined) {
+                await user.update(
+                    { maxUrls: requestBody.maxUrls },
+                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                })
+                outcomeText += "maxUrls updated. "
+            }
+        } 
+        
+        //The user exists but is inactive. Set userActive to 1
+        if (resultCountInActive === 1) {
+            if (requestBody.userActive === 1) {
+                await user.update(
+                    { userActive: requestBody.userActive, userInactiveDate: null },
+                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                })
+                outcomeText += "User reactivated. "
+            } else {
+                outcomeText += "User inactive. Send userActive 1 to reactivate. "
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({'error': 'Error deleting the user'})
+    }
+
+    return res.status(200).json({'outcome': outcomeText})
+})
+
+export {adminRouter}

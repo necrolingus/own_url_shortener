@@ -4,7 +4,7 @@ import {headers} from './middleware/headers.js'
 import {globalLimiter} from './middleware/rateLimit.js'
 import {ensureDatabaseExists} from './controller/createDatabaseIfNotExists.js'
 import {createOrUpdateTables} from './models/modelSync.js'
-import { router } from './routes/routes.js'
+import { adminRouter } from './routes/adminRoutes.js'
 
 const app = express()
 const port = config.port
@@ -17,7 +17,7 @@ app.use(headers)
 app.use(globalLimiter)
 
 //Set API router
-app.use('/api', router)
+app.use('/api/admin', adminRouter)
 
 //Ensure database exists
 ensureDatabaseExists() 

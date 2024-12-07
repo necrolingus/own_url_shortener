@@ -4,8 +4,9 @@ import {headers} from './middleware/headers.js'
 import {globalLimiter} from './middleware/rateLimit.js'
 import {ensureDatabaseExists} from './controller/createDatabaseIfNotExists.js'
 import {createOrUpdateTables} from './models/modelSync.js'
-import { adminRouter } from './routes/adminRoutes.js'
-import { userRouter } from './routes/userRoutes.js'
+import {adminRouter} from './routes/adminRoutes.js'
+import {userRouter} from './routes/userRoutes.js'
+import {auditMiddleware} from './middleware/audit.js'
 
 const app = express()
 const port = config.port
@@ -16,6 +17,7 @@ app.set('trust proxy', config.rl_number_of_proxies)
 app.disable('x-powered-by')
 app.use(headers)
 app.use(globalLimiter)
+app.use(auditMiddleware)
 
 //Set API router
 app.use('/api/admin', adminRouter)

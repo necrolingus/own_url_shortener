@@ -1,5 +1,6 @@
 import {user} from './user.js'
 import {path} from './path.js'
+import {audit} from './audit.js'
 
 async function createOrUpdateTables() {
     try {
@@ -10,6 +11,10 @@ async function createOrUpdateTables() {
         //Sync path table
         await path.sync({ alter: true }); 
         console.log(`Path table has been created/updated.`)
+
+        //Sync path table
+        await audit.sync({ alter: true }); 
+        console.log(`Audit table has been created/updated.`)
 
         //Add the foreign key relationship
         user.hasMany(path, {

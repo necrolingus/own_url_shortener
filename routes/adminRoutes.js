@@ -24,7 +24,7 @@ adminRouter.post('/user', async function(req,res) {
     } catch (error) {
         //Handle constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).json({'error': error.cause.detail})
+            return res.status(422).json({'error': error.cause.detail})
         }
         //Handle other errors
         return res.status(500).json({'error': 'Error adding the user'})
@@ -132,7 +132,7 @@ adminRouter.patch('/user', async function(req,res) {
                 })
                 outcomeText += "User reactivated. "
             } else {
-                outcomeText += "User inactive. Send userActive 1 to reactivate. "
+                return res.status(422).json({'error': 'User inactive. Send userActive 1 to reactivate'})
             }
         }
     } catch (error) {

@@ -26,7 +26,7 @@ userRouter.post('/path', async function(req,res) {
     } catch (error) {
         //Handle constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).json({'error': error.cause.detail})
+            return res.status(422).json({'error': error.cause.detail})
         }
         
         //Handle other errors
@@ -78,14 +78,6 @@ userRouter.delete('/path', async function(req,res) {
         return res.status(500).json({'error': 'Error deleting the path'})
     } 
 })
-
-
-
-
-
-
-
-
 
 //update a path
 userRouter.patch('/path', async function(req,res) {
@@ -155,7 +147,7 @@ userRouter.patch('/path', async function(req,res) {
                 })
                 outcomeText += "Path reactivated. "
             } else {
-                outcomeText += "Path inactive. Send pathActive 1 to reactivate. "
+                return res.status(422).json({'error': 'Path inactive. Send pathActive 1 to reactivate.'})
             }
         }
     } catch (error) {

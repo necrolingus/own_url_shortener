@@ -12,10 +12,9 @@ const newUserSchema = {
         secondayEmail: { type: "string", format: "email" },
         phoneNumber: { type: "string", pattern: "^[0-9]{6,}$" },
         apiKey: { type: "string", minLength: 10 },
-        domain: { type: "string", format: "hostname" },
         maxUrls: { type: "integer" },
     },
-    required: ["primaryEmail", "apiKey", "domain", "maxUrls"],
+    required: ["primaryEmail", "apiKey", "maxUrls"],
     additionalProperties: false,
 }
 
@@ -23,24 +22,22 @@ const newUserSchema = {
 const deleteUserSchema = {
     type: "object",
     properties: {
-        primaryEmail: { type: "string", format: "email" },
-        domain: { type: "string", format: "hostname" }
+        primaryEmail: { type: "string", format: "email" }
     },
-    required: ["primaryEmail", "domain"],
+    required: ["primaryEmail"],
     additionalProperties: false,
 }
 
-//The schema for updating a new user
+//The schema for updating a user
 const updateUserSchema = {
     type: "object",
     properties: {
         primaryEmail: { type: "string", format: "email" },
         apiKey: { type: "string", minLength: 10 },
-        domain: { type: "string", format: "hostname" },
         maxUrls: { type: "integer" },
         userActive: { type: "integer" },
     },
-    required: ["primaryEmail", "domain"],
+    required: ["primaryEmail"],
     additionalProperties: false,
 }
 

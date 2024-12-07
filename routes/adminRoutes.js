@@ -1,10 +1,10 @@
-import express, { request } from 'express'
-import {config} from '../controller/config.js'
-import {validateNewUser, validateDeleteUser, validateUpdateUser} from '../controller/schemaValidator.js'
+import express from 'express'
+import {checkAdminApiKey} from '../middleware/adminAuth.js'
+import {validateNewUser, validateDeleteUser, validateUpdateUser} from '../controller/adminSchemaValidator.js'
 import {user} from '../models/user.js'
 
 const adminRouter = express.Router()
-const adminSecretValue = config.adminSecretValue
+adminRouter.use(checkAdminApiKey)
 
 //Create a new user
 adminRouter.post('/user', async function(req,res) {
@@ -22,9 +22,9 @@ adminRouter.post('/user', async function(req,res) {
         })
         return res.status(200).json({'outcome': 'User created'})
     } catch (error) {
-        //Check for PostgreSQL duplicate key error (error code 23505)
-        if (error.name === 'SequelizeUniqueConstraintError' || error.original.code === '23505') {
-            return res.status(400).json({'error': 'Duplicate key error: A user with this email and domain already exists'})
+        //Handle constraint errors
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({'error': error.cause.detail})
         }
         //Handle other errors
         return res.status(500).json({'error': 'Error adding the user'})
@@ -44,11 +44,11 @@ adminRouter.delete('/user', async function(req,res) {
     try {
         //Check if user exists
         const resultCountActive = await user.count(
-            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+            { where: {primaryEmail: requestBody.primaryEmail, userActive: 1 } 
         })
 
         const resultCountInactive = await user.count(
-            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 0 } 
+            { where: {primaryEmail: requestBody.primaryEmail, userActive: 0 } 
         })
 
         if (resultCountActive === 0 && resultCountInactive === 0) {
@@ -59,7 +59,7 @@ adminRouter.delete('/user', async function(req,res) {
         if (resultCountActive === 1) {
             await user.update(
                 { userActive: 0, userInactiveDate: new Date() },
-                { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+                { where: {primaryEmail: requestBody.primaryEmail, userActive: 1 } 
             })
             return res.status(200).json({'outcome': 'User deleted. userActive is now 0'})
         } 
@@ -93,11 +93,11 @@ adminRouter.patch('/user', async function(req,res) {
     try {
         //Check if the user exists in either an active or inactive state
         const resultCountActive = await user.count(
-            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 1 } 
+            { where: {primaryEmail: requestBody.primaryEmail, userActive: 1 } 
         })
 
         const resultCountInActive = await user.count(
-            { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain, userActive: 0 } 
+            { where: {primaryEmail: requestBody.primaryEmail, userActive: 0 } 
         })
 
         if (resultCountActive === 0 && resultCountInActive === 0) {
@@ -109,7 +109,7 @@ adminRouter.patch('/user', async function(req,res) {
             if (requestBody.apiKey !== undefined) {
                 await user.update(
                     { apiKey: requestBody.apiKey },
-                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                    { where: {primaryEmail: requestBody.primaryEmail } 
                 })
                 outcomeText += "apiKey updated. "
             }
@@ -117,7 +117,7 @@ adminRouter.patch('/user', async function(req,res) {
             if (requestBody.maxUrls !== undefined) {
                 await user.update(
                     { maxUrls: requestBody.maxUrls },
-                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                    { where: {primaryEmail: requestBody.primaryEmail } 
                 })
                 outcomeText += "maxUrls updated. "
             }
@@ -128,7 +128,7 @@ adminRouter.patch('/user', async function(req,res) {
             if (requestBody.userActive === 1) {
                 await user.update(
                     { userActive: requestBody.userActive, userInactiveDate: null },
-                    { where: {primaryEmail: requestBody.primaryEmail, domain: requestBody.domain } 
+                    { where: {primaryEmail: requestBody.primaryEmail } 
                 })
                 outcomeText += "User reactivated. "
             } else {
@@ -136,7 +136,7 @@ adminRouter.patch('/user', async function(req,res) {
             }
         }
     } catch (error) {
-        return res.status(500).json({'error': 'Error deleting the user'})
+        return res.status(500).json({'error': 'Error updating the user'})
     }
 
     return res.status(200).json({'outcome': outcomeText})

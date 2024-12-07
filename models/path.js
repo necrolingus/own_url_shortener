@@ -1,54 +1,61 @@
 import { DataTypes } from '@sequelize/core'
 import {InitializeSequelize} from '../controller/db.js'
 import {config} from '../controller/config.js'
+import {user} from './user.js'
 
 //Use the DB defined in our env params, i.e. the application DB
 const sequelize = InitializeSequelize(false)
 
-// Define the User model
-const user = sequelize.define(config.dbUserTable, {
+// Define the Path model
+const path = sequelize.define(config.dbPathTable, {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
     },
-    primaryEmail: {
+    path: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    secondayEmail: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    phoneNumber: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    apiKey: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    maxUrls: {
+    redirect: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    userActive: {
+    destination: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    expireDays: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    pathActive: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 1,
     },
-    userInactiveDate: {
+    pathInactiveDate: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: user,
+            key: 'id'
+        },
+        //onDelete: 'CASCADE', // Optional: Delete paths if the user is deleted
+        //onUpdate: 'CASCADE', // Optional: Update paths if the user's id changes
     }
 }, {
-    timestamps: true,
+    timestamps: true,  //Include timestamps
     indexes: [ 
         {
             unique: true,
-            fields: ['primaryEmail']
+            fields: ['path']
         },
     ]
 });
 
-export { user }
+export { path }

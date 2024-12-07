@@ -1,10 +1,11 @@
 import { DataTypes } from '@sequelize/core'
 import {InitializeSequelize} from '../controller/db.js'
+import {config} from '../controller/config.js'
 
 //Use the DB defined in our env params, i.e. the application DB
 const sequelize = InitializeSequelize(false)
 
-const audit = sequelize.define('audit', {
+const audit = sequelize.define(config.dbAuditTable, {
     responseCode: {
         type: DataTypes.INTEGER,
         allowNull: false,

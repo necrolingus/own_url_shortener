@@ -2,9 +2,24 @@ import express from 'express'
 import {checkUserAuthorization} from '../middleware/userAuth.js'
 import {validateNewPath, validateDeletePath, validateUpdatePath} from '../controller/pathSchemaValidator.js'
 import {path} from '../models/path.js'
+import axios from 'axios'
+import {config} from '../controller/config.js'
 
 const userRouter = express.Router()
 userRouter.use(checkUserAuthorization)
+
+//Function to call update-paths after paths are added, deleted, or modified
+async function updatePaths() {
+    try {
+        const response = await axios.post(`http://localhost:${config.port}/${config.pathPrepend}/update-paths`,{}, {
+            headers: {
+                'api-key': config.updatePathsSecretValue
+            }
+        })
+    } catch (error) {
+        console.log("Could not call update-paths")
+    }
+}
 
 //Create a new user
 userRouter.post('/path', async function(req,res) {
@@ -22,6 +37,9 @@ userRouter.post('/path', async function(req,res) {
         await path.create({
             ...requestBody
         })
+
+        //update the paths
+        await updatePaths()
 
         return res.status(200).json({'outcome': 'Path created'})
     } catch (error) {
@@ -66,7 +84,9 @@ userRouter.delete('/path', async function(req,res) {
                 { pathActive: 0, pathInactiveDate: new Date() },
                 { where: {userId: userId, path: requestBody.path } 
             })
-
+            
+            //update the paths
+            await updatePaths()
             return res.status(200).json({'outcome': 'Path deleted. pathActive is now 0'})
         } 
 
@@ -155,6 +175,8 @@ userRouter.patch('/path', async function(req,res) {
         return res.status(500).json({'error': 'Error updating the path'})
     }
 
+    //update the paths
+    await updatePaths()
     return res.status(200).json({'outcome': outcomeText})
 })
 

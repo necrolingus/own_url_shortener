@@ -1,8 +1,10 @@
 import express from 'express'
+import {getAllPaths} from '../controller/pathGetAll.js'
+import {config} from '../controller/config.js'
 
 const createDynamicPathRouter = (allPaths) => {
     const dynamicPathRouter = express.Router()
-    
+
     dynamicPathRouter.get('/:id', async function(req,res) {
         const path = req.params.id
 
@@ -19,6 +21,18 @@ const createDynamicPathRouter = (allPaths) => {
         
         return res.status(404).send("Not Found")
     })
+
+    dynamicPathRouter.post('/update-paths', async function(req,res) {
+        const apiKey = req.header('api-key')
+       
+        if (apiKey === config.updatePathsSecretValue && apiKey !== undefined) {
+            allPaths = await getAllPaths()
+            return res.status(200).send("OK")
+        }
+
+        return res.status(401).json({ error: 'Unauthorized: Invalid API key' })
+    })
+
     return dynamicPathRouter
 }
 

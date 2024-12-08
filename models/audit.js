@@ -19,7 +19,7 @@ const audit = sequelize.define(config.dbAuditTable, {
         allowNull: false,
     },
     data: {
-        type: DataTypes.JSON, // Stores JSON data
+        type: DataTypes.JSON,
         allowNull: false,
     },
     allHeaders: {
@@ -27,7 +27,7 @@ const audit = sequelize.define(config.dbAuditTable, {
         allowNull: true,
     }
 }, {
-    timestamps: true, // No automatic `createdAt` and `updatedAt`
+    timestamps: true,
 })
 
 export {audit}

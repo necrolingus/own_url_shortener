@@ -53,7 +53,7 @@ const user = sequelize.define(config.dbUserTable, {
     hooks: {
         beforeSave: async (userInstance) => {
           if (userInstance.changed('apiKey')) {
-            userInstance.apiKey = await argon2.hash(userInstance.apiKey);
+            userInstance.apiKey = await argon2.hash(userInstance.apiKey)
           }
         },
     },

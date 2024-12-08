@@ -6,7 +6,9 @@ import {ensureDatabaseExists} from './controller/createDatabaseIfNotExists.js'
 import {createOrUpdateTables} from './models/modelSync.js'
 import {adminRouter} from './routes/adminRoutes.js'
 import {userRouter} from './routes/userRoutes.js'
+import {createDynamicPathRouter} from './routes/dynamicPathRoutes.js'
 import {auditMiddleware} from './middleware/audit.js'
+import {getAllPaths} from './controller/pathGetAll.js'
 
 const app = express()
 const port = config.port
@@ -27,18 +29,26 @@ app.use('/api/user', userRouter)
 ensureDatabaseExists() 
     //Then create the tables
     .then(() => {
-        return createOrUpdateTables(); 
+        return createOrUpdateTables()
     })
+    //Then get all the DB paths
     .then(() => {
-        //Then start the server
+        return getAllPaths()
+    })
+    //Then start up the dynamic endpoints and pass through the DB paths
+    .then((allPaths) => {
+        return app.use(`/${config.pathPrepend}`, createDynamicPathRouter(allPaths))
+    })
+     //Then start the server
+    .then(() => {
         app.listen(port, (err) => {
             if (err) {
-            console.error('Error starting the server:', err);
+            console.error('Error starting the server:', err)
             } else {
-            console.log(`Server is listening on port ${port}`);
+            console.log(`Server is listening on port ${port}`)
             }
         });
     })
     .catch((error) => {
-    console.error('Error during app initialization:', error);
+    console.error('Error during app initialization:', error)
 });

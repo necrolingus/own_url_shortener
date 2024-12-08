@@ -1,6 +1,7 @@
 export const config = {
     port: process.env.OUS_PORT || 3000,
     adminSecretValue: process.env.OUS_ADMIN_SECRET,
+    pathPrepend: process.env.OUS_PATH_PREPEND || 's',
     dbHostname: process.env.OUS_DB_HOSTNAME,
     dbPort: process.env.OUS_DB_PORT,
     dbDatabasename: process.env.OUS_DB_DATABASENAME,

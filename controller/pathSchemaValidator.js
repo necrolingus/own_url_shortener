@@ -10,7 +10,7 @@ const newPathSchema = {
     properties: {
         path: { type: "string", maxLength: 8 },
         redirect: { type: "integer", enum: [301, 302] },
-        destination: { type: "string" },
+        destination: { type: "string", format: "uri" },
         expireDays: { type: "integer" },
     },
     required: ["path", "redirect", "destination", "expireDays"],
@@ -33,7 +33,7 @@ const updatePathSchema = {
     properties: {
         path: { type: "string", maxLength: 8 },
         redirect: { type: "integer", enum: [301, 302] },
-        destination: { type: "string" },
+        destination: { type: "string", format: "uri" },
         expireDays: { type: "integer" },
         pathActive: { type: "integer" },
     },

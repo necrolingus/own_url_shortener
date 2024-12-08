@@ -9,7 +9,7 @@ userRouter.use(checkUserAuthorization)
 //Create a new user
 userRouter.post('/path', async function(req,res) {
     const requestBody = req.body
-    const userId = req.userId
+    const userId = req.userId //Added by the userAuth middleware
     
     const schemaOutcome = validateNewPath(requestBody)
     if (!schemaOutcome) {
@@ -22,6 +22,7 @@ userRouter.post('/path', async function(req,res) {
         await path.create({
             ...requestBody
         })
+
         return res.status(200).json({'outcome': 'Path created'})
     } catch (error) {
         //Handle constraint errors
@@ -30,7 +31,7 @@ userRouter.post('/path', async function(req,res) {
         }
         
         //Handle other errors
-        return res.status(500).json({'error': 'Error adding the user'})
+        return res.status(500).json({'error': 'Error adding the path'})
     }
 })
 
@@ -65,6 +66,7 @@ userRouter.delete('/path', async function(req,res) {
                 { pathActive: 0, pathInactiveDate: new Date() },
                 { where: {userId: userId, path: requestBody.path } 
             })
+
             return res.status(200).json({'outcome': 'Path deleted. pathActive is now 0'})
         } 
 
@@ -74,7 +76,6 @@ userRouter.delete('/path', async function(req,res) {
         }
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({'error': 'Error deleting the path'})
     } 
 })
@@ -151,7 +152,6 @@ userRouter.patch('/path', async function(req,res) {
             }
         }
     } catch (error) {
-        console.log(error)
         return res.status(500).json({'error': 'Error updating the path'})
     }
 

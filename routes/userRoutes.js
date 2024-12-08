@@ -180,4 +180,22 @@ userRouter.patch('/path', async function(req,res) {
     return res.status(200).json({'outcome': outcomeText})
 })
 
+//get all user paths
+userRouter.get('/path', async function(req,res) {
+    const userId = req.userId
+    const pathMap = {}
+
+    const paths = await path.findAll({
+        attributes: ['path', 'redirect', 'destination', 'pathActive'], 
+        where: {userId: userId}
+    })
+
+    paths.forEach((pathInstance) => {
+        const { path: key, redirect, destination, pathActive } = pathInstance.dataValues
+        pathMap[key] = { redirect, destination, pathActive }
+    })
+
+    return res.status(200).json({'outcome': pathMap})
+})
+
 export {userRouter}

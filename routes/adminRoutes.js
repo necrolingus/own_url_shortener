@@ -145,4 +145,12 @@ adminRouter.patch('/user', async function(req,res) {
     return res.status(200).json({'outcome': outcomeText})
 })
 
+adminRouter.get('/paths', async function(req,res) {
+    return res.status(200).json({'outcome': 'all paths here'})
+})
+
+adminRouter.get('/audits', async function(req,res) {
+    return res.status(200).json({'outcome': 'all audits here'})
+})
+
 export {adminRouter}

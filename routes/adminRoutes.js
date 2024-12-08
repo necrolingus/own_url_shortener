@@ -1,7 +1,10 @@
 import express from 'express'
+import { Op } from '@sequelize/core';
 import {checkAdminApiKey} from '../middleware/adminAuth.js'
 import {validateNewUser, validateDeleteUser, validateUpdateUser} from '../controller/adminSchemaValidator.js'
 import {user} from '../models/user.js'
+import {path} from '../models/path.js'
+import {audit} from '../models/audit.js'
 import argon2 from 'argon2'
 
 const adminRouter = express.Router()
@@ -146,11 +149,63 @@ adminRouter.patch('/user', async function(req,res) {
 })
 
 adminRouter.get('/paths', async function(req,res) {
-    return res.status(200).json({'outcome': 'all paths here'})
+    const userPathsJson = {}
+
+    const userPaths = await user.findAll({
+        attributes: ['primaryEmail'], // Select primaryEmail as the key
+        include: [
+            {
+                model: path,
+                attributes: ['path', 'redirect', 'destination', 'pathActive'],
+            },
+        ],
+    })
+
+    //convert the results into JSON   
+    userPaths.forEach((userInstance) => {
+        const { primaryEmail, paths } = userInstance.dataValues
+
+        // Create a sub-object for this user's paths
+        const pathMap = {}
+
+        paths.forEach((pathInstance) => {
+            const { path: key, redirect, destination, pathActive } = pathInstance.dataValues
+            pathMap[key] = { redirect, destination, pathActive }
+        });
+
+        // Add the primaryEmail as the key, and its paths as the value
+        userPathsJson[primaryEmail] = pathMap
+    });
+
+    return res.status(200).json({'outcome': userPathsJson})
 })
 
 adminRouter.get('/audits', async function(req,res) {
-    return res.status(200).json({'outcome': 'all audits here'})
+    const pathMap = {}
+
+    const audits = await audit.findAll({
+        attributes: ["responseCode", "fullPath", "httpMethod", "data", "allHeaders", "createdAt", "updatedAt"]
+    })
+
+    audits.forEach((pathInstance) => {
+        const { fullPath: key, responseCode, httpMethod, data, allHeaders, createdAt, updatedAt } = pathInstance.dataValues
+        pathMap[key] = { responseCode, httpMethod, data, allHeaders, createdAt, updatedAt }
+    })
+
+    return res.status(200).json({'outcome': pathMap})
+})
+
+adminRouter.delete('/audits', async function(req,res) {
+    const requestBody = req.body
+    const olderThan = requestBody.olderThan
+
+    const audits = await audit.destroy({
+        where: {
+            createdAt: {[Op.lt]: olderThan}
+        }
+    })
+
+    return res.status(200).json({'outcome': `${audits} records deleted`})
 })
 
 export {adminRouter}

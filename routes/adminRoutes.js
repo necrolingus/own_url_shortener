@@ -2,6 +2,7 @@ import express from 'express'
 import {checkAdminApiKey} from '../middleware/adminAuth.js'
 import {validateNewUser, validateDeleteUser, validateUpdateUser} from '../controller/adminSchemaValidator.js'
 import {user} from '../models/user.js'
+import argon2 from 'argon2'
 
 const adminRouter = express.Router()
 adminRouter.use(checkAdminApiKey)
@@ -107,8 +108,10 @@ adminRouter.patch('/user', async function(req,res) {
         //The user exists and is active
         if (resultCountActive === 1) {
             if (requestBody.apiKey !== undefined) {
+                const apiKeyHash = await argon2.hash(requestBody.apiKey)
+
                 await user.update(
-                    { apiKey: requestBody.apiKey },
+                    { apiKey: apiKeyHash },
                     { where: {primaryEmail: requestBody.primaryEmail } 
                 })
                 outcomeText += "apiKey updated. "

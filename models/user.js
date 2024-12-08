@@ -1,6 +1,7 @@
 import { DataTypes } from '@sequelize/core'
 import {InitializeSequelize} from '../controller/db.js'
 import {config} from '../controller/config.js'
+import argon2 from 'argon2'
 
 //Use the DB defined in our env params, i.e. the application DB
 const sequelize = InitializeSequelize(false)
@@ -48,7 +49,15 @@ const user = sequelize.define(config.dbUserTable, {
             unique: true,
             fields: ['primaryEmail']
         },
-    ]
-});
+    ],
+    hooks: {
+        beforeSave: async (userInstance) => {
+          if (userInstance.changed('apiKey')) {
+            userInstance.apiKey = await argon2.hash(userInstance.apiKey);
+          }
+        },
+    },
+})
+
 
 export { user }

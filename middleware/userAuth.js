@@ -1,4 +1,5 @@
 import {user} from '../models/user.js'
+import argon2 from 'argon2';
 
 async function checkUserAuthorization(req, res, next) {
   const authorization = req.header('Authorization');
@@ -14,20 +15,29 @@ async function checkUserAuthorization(req, res, next) {
     const primaryEmail = authorizationElements[0]
     const apiKey = authorizationElements[1]
   
-    //Check if the user exists and return its id value (primary key)
+    //Check if the user exists and get the API key so we can
+    //validate if the hashed value matches the API key passed through
     const userRecord = await user.findOne({
-      attributes: ['id'], // Select only the `id` column
+      attributes: ['id', 'apiKey'], 
       where: { 
           primaryEmail: primaryEmail, 
-          apiKey: apiKey, 
+          //apiKey: apiKey, 
           userActive: 1 
       }
     })
 
+    //No record found for the provided email, so just return 401
     if (!userRecord) {
       return res.status(401).json({ error: 'Unauthorized: Invalid user credentials' })
     }
-    req.userId = userRecord.id //make the userId available to the routes
+
+    //Now check if the API key passed through matches our stored hashed API key
+    const isApiKeyValid = await argon2.verify(userRecord.apiKey, apiKey);
+    if (isApiKeyValid) {
+      req.userId = userRecord.id //make the userId available to the routes
+    } else {
+      return res.status(401).json({ error: 'Unauthorized: Invalid user credentials' })
+    }
 
   } catch(error) {
     return res.status(422).json({ error: 'Authorization header bad' });

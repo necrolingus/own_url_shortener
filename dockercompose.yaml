@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   own_url_shortener_app:
-    image: nodejs_own_url_shortener:latest
+    image: nodejs_own_url_shortener:latest #or when using public image ghcr.io/necrolingus/own_url_shortener:latest
     restart: unless-stopped
     depends_on:
       - own_url_shortener_db

@@ -11,6 +11,8 @@ export const config = {
     dbUserTable: process.env.OUS_DB_USER_TABLE,
     dbPathTable: process.env.OUS_DB_PATH_TABLE,
     dbPathCleanupHours: process.env.OUS_DB_PATH_CLEANUP_HOURS || 1,
+    dbAuditCleanupHours: process.env.OUS_DB_AUDIT_CLEANUP_HOURS || 1,
+    dbAuditDaysToKeep: process.env.OUS_DB_AUDIT_AUDIT_DAYS_TO_KEEP || 5,
     dbAuditTable: 'audit',
     disableAuditDelete: process.env.OUS_DISABLE_AUDIT_DELETE || 1,
     rl_window_minutes: process.env.OUS_RL_WINDOW_MINUTES || 3,

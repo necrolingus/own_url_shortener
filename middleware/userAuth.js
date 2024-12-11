@@ -18,10 +18,9 @@ async function checkUserAuthorization(req, res, next) {
     //Check if the user exists and get the API key so we can
     //validate if the hashed value matches the API key passed through
     const userRecord = await user.findOne({
-      attributes: ['id', 'apiKey'], 
+      attributes: ['id', 'apiKey', 'maxPaths'], 
       where: { 
           primaryEmail: primaryEmail, 
-          //apiKey: apiKey, 
           userActive: 1 
       }
     })
@@ -34,7 +33,9 @@ async function checkUserAuthorization(req, res, next) {
     //Now check if the API key passed through matches our stored hashed API key
     const isApiKeyValid = await argon2.verify(userRecord.apiKey, apiKey);
     if (isApiKeyValid) {
-      req.userId = userRecord.id //make the userId available to the routes
+      //make the retrieved data available to the routes
+      req.userId = userRecord.id
+      req.maxPaths = userRecord.maxPaths
     } else {
       return res.status(401).json({ error: 'Unauthorized: Invalid user credentials' })
     }

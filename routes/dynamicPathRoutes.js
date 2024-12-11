@@ -2,6 +2,9 @@ import express from 'express'
 import {getAllPaths} from '../controller/pathGetAll.js'
 import {config} from '../controller/config.js'
 
+//createDynamicPathRouter is called by index.js
+//dynamicPathRouter.post is called by routes/userRoutes.js whenever a route gets modified
+//so that the object "allPaths" can be updated.
 const createDynamicPathRouter = (allPaths) => {
     const dynamicPathRouter = express.Router()
 

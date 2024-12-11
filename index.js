@@ -9,6 +9,7 @@ import {userRouter} from './routes/userRoutes.js'
 import {createDynamicPathRouter} from './routes/dynamicPathRoutes.js'
 import {auditMiddleware} from './middleware/audit.js'
 import {getAllPaths} from './controller/pathGetAll.js'
+import {startPathCleanup} from  './controller/deleteExpiredPaths.js'
 
 const app = express()
 const port = config.port
@@ -45,6 +46,8 @@ ensureDatabaseExists()
             if (err) {
             console.error('Error starting the server:', err)
             } else {
+            const cleanup = config.dbPathCleanupHours * 60 * 60 * 1000 //hours converted to milliseconds
+            startPathCleanup(cleanup)
             console.log(`Server is listening on port ${port}`)
             }
         });

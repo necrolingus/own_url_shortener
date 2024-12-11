@@ -25,14 +25,26 @@ async function updatePaths() {
 userRouter.post('/path', async function(req,res) {
     const requestBody = req.body
     const userId = req.userId //Added by the userAuth middleware
+    const maxPaths = req.maxPaths //Added by the userAuth middleware
     
     const schemaOutcome = validateNewPath(requestBody)
     if (!schemaOutcome) {
         return res.status(422).json({'error': 'Bad schema'})
     }
 
-    //add the userId which is the foreign key
-    requestBody["userId"] = userId
+    //Add the userId as our foreign key
+    requestBody["userId"] = userId 
+
+    //Check if the user has more than maxPaths number of active paths
+    //and return an error if they do
+    const resultCountCurrentPaths = await path.count(
+        { where: {userId: userId, pathActive: 1 } 
+    })
+    if (resultCountCurrentPaths >= maxPaths){
+        return res.status(422).json({'error': 'User has too many active paths. Either update the user maxPaths value or disable old paths'})
+    }
+
+    //User has less than their maxPaths number of paths, so lets create the new path
     try {
         await path.create({
             ...requestBody
@@ -41,7 +53,11 @@ userRouter.post('/path', async function(req,res) {
         //update the paths
         await updatePaths()
 
-        return res.status(200).json({'outcome': 'Path created'})
+        //Build the URL so end users know what URL they should share
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const userUrl = `Share this URL: ${baseUrl}/${config.pathPrepend}/${requestBody.path}`
+
+        return res.status(200).json({'outcome': userUrl})
     } catch (error) {
         //Handle constraint errors
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -105,10 +121,19 @@ userRouter.patch('/path', async function(req,res) {
     let outcomeText = ""
     const requestBody = req.body
     const userId = req.userId
+    const maxPaths = req.maxPaths //Added by the userAuth middleware
     const schemaOutcome = validateUpdatePath(requestBody)
 
     if (!schemaOutcome) {
         return res.status(422).json({'error': 'Bad schema'})
+    }
+
+    //Check if the user will have > maxPaths active paths after re-enabling an old path
+    const resultCountCurrentPaths = await path.count(
+        { where: {userId: userId, pathActive: 1 } 
+    })
+    if (resultCountCurrentPaths + 1 >= maxPaths){
+        return res.status(422).json({'error': 'User will have more than maxPaths active paths after reactivating this path. Either update the user maxPaths value or disable old paths'})
     }
 
     //Check if the user sent any data to be updated

@@ -6,6 +6,7 @@ import {user} from '../models/user.js'
 import {path} from '../models/path.js'
 import {audit} from '../models/audit.js'
 import argon2 from 'argon2'
+import {config} from '../controller/config.js'
 
 const adminRouter = express.Router()
 adminRouter.use(checkAdminApiKey)
@@ -89,7 +90,7 @@ adminRouter.patch('/user', async function(req,res) {
     }
 
     //Check if the admin sent any data to be updated
-    if (requestBody.apiKey === undefined && requestBody.maxUrls === undefined) {
+    if (requestBody.apiKey === undefined && requestBody.maxPaths === undefined) {
         return res.status(422).json({'error': 'Nothing requested for update'})
     } 
 
@@ -120,12 +121,12 @@ adminRouter.patch('/user', async function(req,res) {
                 outcomeText += "apiKey updated. "
             }
 
-            if (requestBody.maxUrls !== undefined) {
+            if (requestBody.maxPaths !== undefined) {
                 await user.update(
-                    { maxUrls: requestBody.maxUrls },
+                    { maxPaths: requestBody.maxPaths },
                     { where: {primaryEmail: requestBody.primaryEmail } 
                 })
-                outcomeText += "maxUrls updated. "
+                outcomeText += "maxPaths updated. "
             }
         } 
         
@@ -146,6 +147,23 @@ adminRouter.patch('/user', async function(req,res) {
     }
 
     return res.status(200).json({'outcome': outcomeText})
+})
+
+adminRouter.get('/users', async function(req,res) {
+    const pathMap = {}
+
+    //Get all users
+    const users = await user.findAll({
+        attributes: ['primaryEmail','secondaryEmail','phoneNumber','maxPaths','userActive','userInactiveDate','createdAt','updatedAt'], // Select primaryEmail as the key
+    })
+
+    //Convert the results into JSON   
+    users.forEach((userInstance) => {
+        const { primaryEmail: key, secondaryEmail, phoneNumber, maxPaths, userActive, userInactiveDate, createdAt, updatedAt } = userInstance.dataValues
+        pathMap[key] = { secondaryEmail, phoneNumber, maxPaths, userActive, userInactiveDate, createdAt, updatedAt }
+    })
+
+    return res.status(200).json({'outcome': pathMap})
 })
 
 adminRouter.get('/paths', async function(req,res) {
@@ -175,16 +193,21 @@ adminRouter.get('/paths', async function(req,res) {
 
         // Add the primaryEmail as the key, and its paths as the value
         userPathsJson[primaryEmail] = pathMap
-    });
+    })
 
     return res.status(200).json({'outcome': userPathsJson})
 })
 
 adminRouter.get('/audits', async function(req,res) {
     const pathMap = {}
+    const requestBody = req.body
+    const olderThan = requestBody.olderThan
 
     const audits = await audit.findAll({
-        attributes: ["responseCode", "fullPath", "httpMethod", "data", "allHeaders", "createdAt", "updatedAt"]
+        attributes: ["responseCode", "fullPath", "httpMethod", "data", "allHeaders", "createdAt", "updatedAt"],
+        where: {
+            createdAt: {[Op.lt]: olderThan}
+        }
     })
 
     audits.forEach((pathInstance) => {
@@ -196,6 +219,10 @@ adminRouter.get('/audits', async function(req,res) {
 })
 
 adminRouter.delete('/audits', async function(req,res) {
+    if (config.disableAuditDelete == 1) {
+        return res.status(401).json({'error': 'Audit deletion has been disabled by the operator'})
+    }
+
     const requestBody = req.body
     const olderThan = requestBody.olderThan
 

@@ -9,12 +9,12 @@ const newUserSchema = {
     type: "object",
     properties: {
         primaryEmail: { type: "string", format: "email" },
-        secondayEmail: { type: "string", format: "email" },
+        secondaryEmail: { type: "string", format: "email" },
         phoneNumber: { type: "string", pattern: "^[0-9]{6,}$" },
         apiKey: { type: "string", minLength: 10 },
-        maxUrls: { type: "integer" },
+        maxPaths: { type: "integer" },
     },
-    required: ["primaryEmail", "apiKey", "maxUrls"],
+    required: ["primaryEmail", "apiKey", "maxPaths"],
     additionalProperties: false,
 }
 
@@ -34,7 +34,7 @@ const updateUserSchema = {
     properties: {
         primaryEmail: { type: "string", format: "email" },
         apiKey: { type: "string", minLength: 10 },
-        maxUrls: { type: "integer" },
+        maxPaths: { type: "integer" },
         userActive: { type: "integer" },
     },
     required: ["primaryEmail"],

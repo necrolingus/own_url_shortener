@@ -17,7 +17,7 @@ const user = sequelize.define(config.dbUserTable, {
         type: DataTypes.STRING,
         allowNull: false
     },
-    secondayEmail: {
+    secondaryEmail: {
         type: DataTypes.STRING,
         allowNull: true,
     },
@@ -29,7 +29,7 @@ const user = sequelize.define(config.dbUserTable, {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    maxUrls: {
+    maxPaths: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },

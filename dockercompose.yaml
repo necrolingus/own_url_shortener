@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  own_url_shortener_app:
+    image: nodejs_own_url_shortener:latest
+    restart: unless-stopped
+    depends_on:
+      - own_url_shortener_db
+    command: /bin/sh -c "sleep 10 && node index.js" #just sleep a bit so DB can start up
+    ports:
+      - 8087:3000
+    env_file: stack.env
+  own_url_shortener_db:
+    image: postgres:17.2-alpine3.21
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    shm_size: 96mb
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      
+volumes:
+  postgresdata:

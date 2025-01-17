@@ -1,10 +1,10 @@
 # 🚀 Own URL Shortener
 
-Spin up this Node.js app in Docker or as a standalone app to to have your own URL shortener. 🧪
+Spin up this Node.js app in Docker or as a standalone app to have your own URL shortener. 🧪
 
 Add or disable users, limit how many short URLs a user can have, view audits, including adding, removing and modiying short URLs on the fly, and so much more! 🥳
 
-There are several parameters you can set to fine tune your experience, and includes automatic short URL expiration handling, audit log cleanup, and more! 📜
+There are several parameters you can set to fine tune your experience and includes automatic short URL expiration handling, audit log cleanup, etc 📜
 
 
 ---
